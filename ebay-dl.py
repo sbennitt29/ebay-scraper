@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import argparse
 from decimal import Decimal, InvalidOperation
 import json
+import re
 
 def extract_listings(html):
 
@@ -36,17 +37,17 @@ def extract_listings(html):
             status = None
         
         shipping_tag = item.select_one('.s-item__shipping')
+
         if shipping_tag:
             shipping_text = shipping_tag.get_text(strip=True)
-
             if 'free' in shipping_text.lower():
                 shipping = 0
             else:
-                shipping_text = shipping_text.replace('$', '')
-                shipping_text = shipping_text.split(' ')[0]
-                try:
-                    shipping = int(Decimal(shipping_text) * 100)
-                except InvalidOperation:
+                match = re.search(r'\$\s*([\d,]+(?:\.\d{1,2})?)', shipping_text)
+                if match:
+                    shipping_price = match.group(1).replace(',', '')
+                    shipping = int(Decimal(shipping_price) * 100)
+                else:
                     shipping = None
         else:
             shipping = None
