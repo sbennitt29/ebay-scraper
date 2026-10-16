@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import argparse
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import json
 
 def extract_listings(html):
@@ -19,13 +19,15 @@ def extract_listings(html):
             name = None
 
         price_tag = item.select_one('.s-item__price')
+        price = None
         if price_tag:
             price_text = price_tag.get_text(strip=True)
             first_price = price_text.split(' to ')[0]
             first_price = first_price.replace('$', '').replace(',', '')
-            price = int(Decimal(first_price) * 100)
-        else:
-            price = None
+            try:
+                price = int(Decimal(first_price) * 100)
+            except InvalidOperation:
+                price = None
         
         status_tag = item.select_one('.SECONDARY_INFO')
         if status_tag:
@@ -42,7 +44,10 @@ def extract_listings(html):
             else:
                 shipping_text = shipping_text.replace('$', '')
                 shipping_text = shipping_text.split(' ')[0]
-                shipping = int(Decimal(shipping_text) * 100)
+                try:
+                    shipping = int(Decimal(shipping_text) * 100)
+                except InvalidOperation:
+                    shipping = None
         else:
             shipping = None
         
